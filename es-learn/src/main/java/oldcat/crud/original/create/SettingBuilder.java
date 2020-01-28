@@ -2,24 +2,13 @@ package oldcat.crud.original.create;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.alibaba.fastjson.JSONObject;
 
 public class SettingBuilder {
 	private Map<String, Object> setting;
-
-	/**
-	 * 给某个属性配置analyser
-	 * 
-	 * @see <a href=
-	 *      'https://www.elastic.co/guide/en/elasticsearch/reference/current/analyzer.html#search-quote-analyzer'></a>
-	 * @param treePaths
-	 * @param type
-	 * @param analyzer  analyzerName
-	 * @param old       oldSetting
-	 * @return new setting
-	 */
 	private static Map<String, Object> generateSetFiledAnalyser(String treePaths, String type, String analyzer,
 			String searchAnalyzer,String searchQuoteAnalyzer,
 			Map<String, Object> old) {
@@ -80,15 +69,7 @@ public class SettingBuilder {
 		return map;
 
 	}
-/**
- * 
- * @param treePaths 属性名称 例如 person.text
- * @param type
- * @param analyzer 索引分词器
- * @param searchAnalyzer 搜索时分词器
- * @param searchQuoteAnalyzer 搜索时语法分词器
- * @return
- */
+
 	public SettingBuilder setAnalyser(String treePaths, String type, String analyzer,String searchAnalyzer,String searchQuoteAnalyzer ) {
 		this.setting = generateSetFiledAnalyser(treePaths, type, analyzer,searchAnalyzer,searchQuoteAnalyzer ,setting);
 		return this;
@@ -115,6 +96,137 @@ public class SettingBuilder {
 	}
 	
 	
+	private String fieldsRealPath(String path) {
+		String[] paths = path.split("\\.");
+		StringBuilder builder = new StringBuilder();
+		for(int i =0;i<paths.length-1;i++) {
+			builder.append(paths[i]);
+			builder.append(".fields.");
+		}
+		builder.append(  paths[paths.length-1]);
+		return builder.toString();
+	}
+	private String propertiesRealPath(String path) {
+		String[] paths = path.split("\\.");
+		StringBuilder builder = new StringBuilder();
+		for(int i =0;i<paths.length-1;i++) {
+			builder.append(paths[i]);
+			builder.append(".properties.");
+		}
+		builder.append(  paths[paths.length-1]);
+		return builder.toString();
+	}
 	
+	
+	public SettingBuilder customNormalizer(String normalizerName,String type,List<String> charFilter,String... filters ) {
+		Map<String ,Object> map = new HashMap<String,Object>();
+		map.put("type", type);
+		map.put("char_filter", charFilter);
+		map.put("filter", Arrays.asList(filters));
+		this.commonSetting("settings.analysis.normalizer",normalizerName , map);
+		return this;
+	}
+	public SettingBuilder setNormalizer(String fields , String normalizer , String type) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields),"type", type);
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields),"normalizer", normalizer);
+		return this;
+	}
+	public SettingBuilder setFiledsBoost(String fields ,double boost) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields),"boost", boost);
+		return this;
+	}
+	/**
+	 *	 是否会进行类型转化 ，比如把json中字符串转成 int，
+	 *  	如果fields为空则设置为全局
+	 * @param fields
+	 * @param coerce
+	 * @return
+	 */
+	public SettingBuilder setCoerce(String fields , boolean coerce) {
+		if(fields==null)this.commonSetting("settings", "index.mapping.coerce", coerce);
+		else {
+			this.commonSetting("mappings.properties."+fieldsRealPath(fields), "coerce", coerce);
+		}
+		return this;
+	}
+	/**
+	 * copyTo 类似于一个属性的视图，将多个field 合并成一个可以进行查询的视图
+	 * @param orginal
+	 * @param aim
+	 * @return
+	 */
+	public SettingBuilder setCopyTo(String orginal , String aim) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(orginal), "copy_to", aim);
+		getIfAbsentThenNewMapByTreePaths(this.setting,"mappings.properties."+fieldsRealPath(aim) );
+		return this;
+	}
+	/**
+	 * false 可以被搜索但是不返回数据
+	 * @param fields
+	 * @param docuValue
+	 * @return
+	 */
+	public SettingBuilder setDocValues(String fields,boolean docuValue) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "doc_values", docuValue);
+		return this;
+	}
+	/**
+	 * 	可以动态的添加新的field
+	 * @param fields
+	 * @param docuValue
+	 * @return
+	 */
+	public SettingBuilder setDynamic(String fields,boolean dynamic) {
+		if(fields==null)this.commonSetting("mappings"+propertiesRealPath(fields), "dynamic", dynamic);
+		else this.commonSetting("mappings.properties."+propertiesRealPath(fields), "dynamic", dynamic);
+		return this;
+	}
+	/**
+	 * 设置 某field不能被index ，注意这个field 一定是type类型。
+	 * @param fields
+	 * @param enable
+	 * @return
+	 */
+	public SettingBuilder setEnabled(String fields,boolean enable) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "dynamic", enable);
+		return this;
+	}
+	/**
+	 *  全局序列数，优化聚合使用，但是费内存，频繁更新最好不用
+	 * @param fields
+	 * @param ordinal
+	 * @return
+	 */
+	public SettingBuilder setEagerGlobalOrdinals(String fields,boolean ordinal) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "eager_global_ordinals", ordinal);
+		return this;
+	}
+	/**
+	 * text 不能使用doc_value 存储，所以通过fieldData来放入缓存中。其他参数作为过滤条件来筛选哪些需要加载如内存
+	 * min 最小词频，max最大词频，minSegmentSize用来排除小的segment
+	 * @param fields
+	 * @param fielddata
+	 * @param min
+	 * @param max
+	 * @param minSegmentSize
+	 * @return
+	 */
+	public SettingBuilder setFieldData(String fields ,boolean fielddata,double min ,double max, int minSegmentSize) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "fielddata", fielddata);
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields)+".fielddata_frequency_filter", "min", min);
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields)+".fielddata_frequency_filter", "max", max);
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields)+".fielddata_frequency_filter", "min_segment_size", minSegmentSize);
+		return this;
+	}
+	/**
+	 * 	过滤词汇，长度大于20则不放入索引
+	 * @param fields
+	 * @param maxLen
+	 * @return
+	 */
+	public SettingBuilder setIgnoreAbove(String fields ,int maxLen) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "ignore_above", maxLen);
+		return this;
+	}
 	
 }

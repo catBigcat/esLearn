@@ -1,5 +1,6 @@
 package oldcat.crud.original.create.examples;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -60,6 +61,7 @@ public class InsertDocument {
 		HttpEntity<String> request = new HttpEntity<String>(userWillInEs.toString(),requestHeaders);
 		ResponseEntity<String> response = rest.postForEntity(url, request,String.class);
 		System.out.print(response.getBody());
+		
 	}
 	
 	
