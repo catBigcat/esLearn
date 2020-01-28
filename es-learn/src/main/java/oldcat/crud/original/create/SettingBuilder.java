@@ -228,5 +228,128 @@ public class SettingBuilder {
 		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "ignore_above", maxLen);
 		return this;
 	}
-	
+	/**
+	 * 	类型错误 是否忽略文档
+	 * @param fields
+	 * @param ignore
+	 * @return
+	 */
+	public SettingBuilder setIgnoreMalformed(String fields , boolean ignore) {
+		if(fields==null) {
+			this.commonSetting("settings", "index.mapping.ignore_malformed", ignore);
+		
+		}else {
+			this.commonSetting("mappings.properties."+fieldsRealPath(fields), "ignore_malformed", ignore);
+		}
+		return this;
+	}
+	public SettingBuilder setIndex(String fields , boolean index) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "index", index);
+		return this;
+	}
+	/**
+	 * <a href='https://www.elastic.co/guide/en/elasticsearch/reference/current/index-options.html'>参考</a>
+	 * @param fields
+	 * @param indexOptions  可选为docs freqs positions offsets
+	 * @return
+	 */
+	public SettingBuilder setIndexOptions(String fields , String indexOptions) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "index_options", indexOptions);
+		return this;
+	}
+	public SettingBuilder setIndexPhrases(String fields , boolean indexPhrases) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "index-phrases", indexPhrases);
+		return this;
+	}
+	/**
+	 * speed up prefix searches
+	 * @param fields
+	 * @param min The minimum prefix length to index
+	 * @param max The maximum prefix length to index
+	 * @return
+	 */
+	public SettingBuilder setIndexPrefixes(String fields , int min ,int max) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields)+".index_prefixes", "min_chars", min);
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields)+".index_prefixes", "max_chars", max);
+		return this;
+	}	
+	/**
+	 * <p>Norms store various normalization factors that are later used at query time in order to compute the score of a document relatively to a query.</p>
+		<p>Although useful for scoring, norms also require quite a lot of disk (typically in the order of one byte per document per field in your index, even for documents that don’t have this specific field). As a consequence, if you don’t need scoring on a specific field, you should disable norms on that field. In particular, this is the case for fields that are used solely for filtering or aggregations.</p>
+	 * @param fields
+	 * @param norms
+	 * @return
+	 */
+	public SettingBuilder setNorms(String fields , boolean norms) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "norms", norms);
+		return this;
+	}	
+	/**
+	 * 如果输入为null ，则用obj作为缺失值
+	 * @param fields
+	 * @param obj
+	 * @return
+	 */
+	public SettingBuilder setNullValue(String fields , Object obj) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "null_value", obj);
+		return this;
+	}
+	/**
+	 * 	分词的间隔，对于数组而言。应用于proximity or phrase queries
+	 * 	对于语法查询 可以通过"slop"来控制间隔
+	 * @param fields
+	 * @param value
+	 * @return
+	 */
+	public SettingBuilder setPositionIncrementGap(String fields , int value) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "position_increment_gap", value);
+		return this;
+	}
+	/**
+	 * 
+	 * @param fields
+	 * @param similarity BM25 , classic , boolean
+	 * @return
+	 */
+	public SettingBuilder setSimilarity(String fields , String similarity) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "similarity", similarity);
+		return this;
+	}
+	/**
+	 * _source 是否存储此项
+	 * @param fields
+	 * @param similarity
+	 * @return
+	 */
+	public SettingBuilder setStore(String fields , boolean store) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "store", store);
+		return this;
+	}
+	/**
+	 * <p> no
+	 *No term vectors are stored. (default)
+	 *</p> <p>
+	 *yes
+	 *Just the terms in the field are stored.
+	 *</p><p>
+	 *with_positions	
+	 *Terms and positions are stored.
+	 *</p><p>
+	 *with_offsets
+	 *Terms and character offsets are stored.
+	 *</p><p>
+	 *with_positions_offsets
+	 *Terms, positions, and character offsets are stored.
+	 *</p><p>
+	 *with_positions_payloads
+	 *Terms, positions, and payloads are stored. </p>
+	 *<p>用于快速高亮</p>
+	 * @param fields
+	 * @param termVector
+	 * @return
+	 */
+	public SettingBuilder setTermVector(String fields , String termVector) {
+		this.commonSetting("mappings.properties."+fieldsRealPath(fields), "term_vector", termVector);
+		return this;
+	}
 }
